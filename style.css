@@ -240,13 +240,13 @@ li {
     border-radius: 999px;
 }
 
-.t1 { bottom: 12px; }
-.t2 { bottom: 70px; width: 34px; animation: run-left 19s linear -6s infinite; }
-.t3 { top: 16px; width: 30px; animation: run-left 22s linear -12s infinite; }
-.t4 { top: 45%; width: 38px; animation-duration: 17s; animation-delay: -3s; }
+/* Height, speed and direction are randomized each lap by turkeys.js */
+.t2 { width: 34px; animation: run-left 19s linear -6s infinite; }
+.t3 { width: 30px; animation: run-left 22s linear -12s infinite; }
+.t4 { width: 38px; animation-delay: -3s; }
 
 /* The one who figured out what the party is about */
-.t5 { bottom: 30px; width: 40px; animation: panic 12s linear 2s infinite backwards; }
+.t5 { width: 40px; animation: panic 12s linear 2s infinite backwards; }
 .t5 svg, .t5 .turkey-leg { animation-duration: 0.1s; }
 
 /* Bonked */

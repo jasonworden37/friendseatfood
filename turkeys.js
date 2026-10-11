@@ -20,13 +20,14 @@
             <path d="M44 27 q3 5 -0.5 7 q-2 -3 0.5 -7z" fill="#d63031"/>
         </svg>`;
 
-    // [css class, speech bubble, points]
+    // [css class, speech bubble, points, seconds per lap (min, max)]
+    // Turkeys with a bubble always run right so the text isn't mirrored.
     const turkeys = [
-        ['t1', '', 1],
-        ['t2', '', 1],
-        ['t3', '', 2],
-        ['t4', 'gobble!', 1],
-        ['t5', 'not the turkey!!', 5],
+        ['t1', '', 1, 9, 22],
+        ['t2', '', 1, 9, 22],
+        ['t3', '', 2, 7, 16],
+        ['t4', 'gobble!', 1, 10, 24],
+        ['t5', 'not the turkey!!', 5, 7, 14],
     ];
 
     const featherColors = ['#c0392b', '#e67e22', '#f1c40f', '#7a4a2a'];
@@ -71,7 +72,29 @@
         setTimeout(() => plus.remove(), 900);
     }
 
-    function bonk(turkey, points, event) {
+    function random(min, max) {
+        return min + Math.random() * (max - min);
+    }
+
+    // New speed, height and direction for each lap
+    function randomizeRun(turkey, minSec, maxSec, canTurn) {
+        turkey.style.top = random(2, 90) + 'vh';
+        turkey.style.bottom = 'auto';
+        turkey.style.animationDuration = random(minSec, maxSec).toFixed(1) + 's';
+        if (canTurn) {
+            turkey.style.animationName = Math.random() < 0.5 ? 'run-left' : 'run-right';
+        }
+    }
+
+    function restartRun(turkey, minSec, maxSec, canTurn) {
+        turkey.style.animation = 'none';
+        void turkey.offsetWidth;
+        turkey.style.animation = '';
+        turkey.style.animationDelay = '0s';
+        randomizeRun(turkey, minSec, maxSec, canTurn);
+    }
+
+    function bonk(turkey, points, event, respawn) {
         if (turkey.classList.contains('dead')) {
             return;
         }
@@ -87,19 +110,29 @@
         // Respawn from the edge of the screen
         setTimeout(() => {
             turkey.classList.remove('dead');
-            turkey.style.animation = 'none';
-            void turkey.offsetWidth;
-            turkey.style.animation = '';
-            turkey.style.animationDelay = '0s';
+            respawn();
         }, respawnMs);
     }
 
-    turkeys.forEach(([cls, bubble, points]) => {
+    turkeys.forEach(([cls, bubble, points, minSec, maxSec]) => {
         const turkey = document.createElement('div');
         turkey.className = 'turkey ' + cls;
         turkey.setAttribute('aria-hidden', 'true');
         turkey.innerHTML = turkeySvg + (bubble ? `<span class="turkey-bubble">${bubble}</span>` : '');
-        turkey.addEventListener('pointerdown', (event) => bonk(turkey, points, event));
+
+        const canTurn = !bubble;
+        const respawn = () => restartRun(turkey, minSec, maxSec, canTurn);
+
+        turkey.addEventListener('pointerdown', (event) => bonk(turkey, points, event, respawn));
+        // Leg and bob animations bubble up here too, so only react to the run itself
+        turkey.addEventListener('animationiteration', (event) => {
+            if (event.target === turkey) {
+                respawn();
+            }
+        });
+
+        // Keep the staggered start from the CSS delays, but randomize the first lap
+        randomizeRun(turkey, minSec, maxSec, canTurn);
         layer.appendChild(turkey);
     });
 
