@@ -1,4 +1,5 @@
-// Tiny turkeys running around the page. Styles live in style.css (.turkey).
+// Tiny turkeys running around the page. Click/tap one to bonk it and score.
+// Styles live in style.css (.turkey).
 (function () {
     const turkeySvg = `
         <svg viewBox="0 0 60 60" aria-hidden="true">
@@ -19,25 +20,99 @@
             <path d="M44 27 q3 5 -0.5 7 q-2 -3 0.5 -7z" fill="#d63031"/>
         </svg>`;
 
-    // [css class, speech bubble]
+    // [css class, speech bubble, points]
     const turkeys = [
-        ['t1', ''],
-        ['t2', ''],
-        ['t3', ''],
-        ['t4', 'gobble!'],
-        ['t5', 'not the turkey!!'],
+        ['t1', '', 1],
+        ['t2', '', 1],
+        ['t3', '', 2],
+        ['t4', 'gobble!', 1],
+        ['t5', 'not the turkey!!', 5],
     ];
+
+    const featherColors = ['#c0392b', '#e67e22', '#f1c40f', '#7a4a2a'];
+    const respawnMs = 2500;
+
+    let score = 0;
+    let best = 0;
+    try {
+        best = parseInt(localStorage.getItem('turkeyBest'), 10) || 0;
+    } catch (e) {}
 
     const layer = document.createElement('div');
     layer.className = 'turkey-layer';
-    layer.setAttribute('aria-hidden', 'true');
 
-    turkeys.forEach(([cls, bubble]) => {
+    const scoreboard = document.createElement('div');
+    scoreboard.className = 'turkey-score';
+    layer.appendChild(scoreboard);
+
+    function renderScore() {
+        scoreboard.textContent = `Turkeys: ${score}` + (best ? ` · Best: ${best}` : '');
+        scoreboard.classList.toggle('visible', score > 0 || best > 0);
+    }
+
+    function burst(x, y, points) {
+        for (let i = 0; i < 8; i++) {
+            const feather = document.createElement('span');
+            feather.className = 'turkey-feather';
+            const angle = (Math.PI * 2 * i) / 8 + Math.random() * 0.5;
+            const dist = 30 + Math.random() * 30;
+            feather.style.left = x + 'px';
+            feather.style.top = y + 'px';
+            feather.style.background = featherColors[i % featherColors.length];
+            feather.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
+            feather.style.setProperty('--dy', Math.sin(angle) * dist + 'px');
+            feather.style.setProperty('--rot', Math.random() * 360 + 'deg');
+            layer.appendChild(feather);
+            setTimeout(() => feather.remove(), 900);
+        }
+
+        const plus = document.createElement('span');
+        plus.className = 'turkey-points';
+        plus.textContent = '+' + points;
+        plus.style.left = x + 'px';
+        plus.style.top = y + 'px';
+        layer.appendChild(plus);
+        setTimeout(() => plus.remove(), 900);
+    }
+
+    function bonk(turkey, points, event) {
+        if (turkey.classList.contains('dead')) {
+            return;
+        }
+        event.preventDefault();
+        turkey.classList.add('dead');
+
+        score += points;
+        if (score > best) {
+            best = score;
+            try {
+                localStorage.setItem('turkeyBest', best);
+            } catch (e) {}
+        }
+        renderScore();
+
+        const rect = turkey.getBoundingClientRect();
+        burst(rect.left + rect.width / 2, rect.top + rect.height / 2, points);
+
+        // Respawn from the edge of the screen
+        setTimeout(() => {
+            turkey.classList.remove('dead');
+            turkey.style.animation = 'none';
+            void turkey.offsetWidth;
+            turkey.style.animation = '';
+            turkey.style.animationDelay = '0s';
+        }, respawnMs);
+    }
+
+    turkeys.forEach(([cls, bubble, points]) => {
         const turkey = document.createElement('div');
         turkey.className = 'turkey ' + cls;
+        turkey.setAttribute('aria-hidden', 'true');
         turkey.innerHTML = turkeySvg + (bubble ? `<span class="turkey-bubble">${bubble}</span>` : '');
+        turkey.addEventListener('pointerdown', (event) => bonk(turkey, points, event));
         layer.appendChild(turkey);
     });
 
+    renderScore();
     document.body.prepend(layer);
 })();
