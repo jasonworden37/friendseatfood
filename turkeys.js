@@ -33,10 +33,6 @@
     const respawnMs = 2500;
 
     let score = 0;
-    let best = 0;
-    try {
-        best = parseInt(localStorage.getItem('turkeyBest'), 10) || 0;
-    } catch (e) {}
 
     const layer = document.createElement('div');
     layer.className = 'turkey-layer';
@@ -46,8 +42,8 @@
     layer.appendChild(scoreboard);
 
     function renderScore() {
-        scoreboard.textContent = `Turkeys: ${score}` + (best ? ` · Best: ${best}` : '');
-        scoreboard.classList.toggle('visible', score > 0 || best > 0);
+        scoreboard.textContent = `Turkeys: ${score}`;
+        scoreboard.classList.toggle('visible', score > 0);
     }
 
     function burst(x, y, points) {
@@ -83,12 +79,6 @@
         turkey.classList.add('dead');
 
         score += points;
-        if (score > best) {
-            best = score;
-            try {
-                localStorage.setItem('turkeyBest', best);
-            } catch (e) {}
-        }
         renderScore();
 
         const rect = turkey.getBoundingClientRect();
