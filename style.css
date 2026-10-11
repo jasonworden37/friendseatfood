@@ -174,12 +174,6 @@ li {
 .page-wrapper {
     position: relative;
     z-index: 1;
-    /* Let taps outside the card reach the turkeys */
-    pointer-events: none;
-}
-
-.card {
-    pointer-events: auto;
 }
 
 .turkey-layer {
@@ -187,7 +181,8 @@ li {
     inset: 0;
     overflow: hidden;
     pointer-events: none;
-    z-index: 0;
+    /* Above the card so turkeys run across it (lots of room on phones) */
+    z-index: 2;
 }
 
 .turkey {
@@ -238,6 +233,7 @@ li {
     font-weight: 600;
     white-space: nowrap;
     border-radius: 999px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* run-left mirrors the whole turkey, so mirror the bubble back to keep it readable */
