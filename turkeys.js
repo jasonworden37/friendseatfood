@@ -20,15 +20,18 @@
             <path d="M44 27 q3 5 -0.5 7 q-2 -3 0.5 -7z" fill="#d63031"/>
         </svg>`;
 
-    // [css class, speech bubble, points, seconds per lap (min, max)]
+    // [css class, speech bubble, seconds per lap (min, max)]
     // Turkeys with a bubble always run right so the text isn't mirrored.
     const turkeys = [
-        ['t1', '', 1, 9, 22],
-        ['t2', '', 1, 9, 22],
-        ['t3', '', 2, 7, 16],
-        ['t4', 'gobble!', 1, 10, 24],
-        ['t5', 'not the turkey!!', 5, 7, 14],
+        ['t1', '', 9, 22],
+        ['t2', '', 9, 22],
+        ['t3', '', 7, 16],
+        ['t4', 'gobble!', 10, 24],
+        ['t5', 'not the turkey!!', 7, 14],
     ];
+
+    // Faster turkeys are worth more: 24s across = 1 point, 3s across = 10 points
+    const pointsScale = 30;
 
     const featherColors = ['#c0392b', '#e67e22', '#f1c40f', '#7a4a2a'];
     const respawnMs = 2500;
@@ -80,7 +83,11 @@
     function randomizeRun(turkey, minSec, maxSec, canTurn) {
         turkey.style.top = random(2, 90) + 'vh';
         turkey.style.bottom = 'auto';
-        turkey.style.animationDuration = random(minSec, maxSec).toFixed(1) + 's';
+        const lapSec = random(minSec, maxSec);
+        turkey.style.animationDuration = lapSec.toFixed(1) + 's';
+        // The panic lap spends most of its time offscreen; it only crosses during the first 35%
+        const crossSec = getComputedStyle(turkey).animationName === 'panic' ? lapSec * 0.35 : lapSec;
+        turkey.dataset.points = Math.max(1, Math.round(pointsScale / crossSec));
         if (canTurn) {
             turkey.style.animationName = Math.random() < 0.5 ? 'run-left' : 'run-right';
         }
@@ -94,13 +101,14 @@
         randomizeRun(turkey, minSec, maxSec, canTurn);
     }
 
-    function bonk(turkey, points, event, respawn) {
+    function bonk(turkey, event, respawn) {
         if (turkey.classList.contains('dead')) {
             return;
         }
         event.preventDefault();
         turkey.classList.add('dead');
 
+        const points = Number(turkey.dataset.points);
         score += points;
         renderScore();
 
@@ -114,7 +122,10 @@
         }, respawnMs);
     }
 
-    turkeys.forEach(([cls, bubble, points, minSec, maxSec]) => {
+    // Turkeys must be in the page before randomizeRun reads their computed styles
+    document.body.prepend(layer);
+
+    turkeys.forEach(([cls, bubble, minSec, maxSec]) => {
         const turkey = document.createElement('div');
         turkey.className = 'turkey ' + cls;
         turkey.setAttribute('aria-hidden', 'true');
@@ -123,7 +134,7 @@
         const canTurn = !bubble;
         const respawn = () => restartRun(turkey, minSec, maxSec, canTurn);
 
-        turkey.addEventListener('pointerdown', (event) => bonk(turkey, points, event, respawn));
+        turkey.addEventListener('pointerdown', (event) => bonk(turkey, event, respawn));
         // Leg and bob animations bubble up here too, so only react to the run itself
         turkey.addEventListener('animationiteration', (event) => {
             if (event.target === turkey) {
@@ -132,10 +143,9 @@
         });
 
         // Keep the staggered start from the CSS delays, but randomize the first lap
-        randomizeRun(turkey, minSec, maxSec, canTurn);
         layer.appendChild(turkey);
+        randomizeRun(turkey, minSec, maxSec, canTurn);
     });
 
     renderScore();
-    document.body.prepend(layer);
 })();
