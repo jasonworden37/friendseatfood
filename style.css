@@ -240,6 +240,11 @@ li {
     border-radius: 999px;
 }
 
+/* run-left mirrors the whole turkey, so mirror the bubble back to keep it readable */
+.turkey.running-left .turkey-bubble {
+    transform: translateX(-50%) scaleX(-1);
+}
+
 /* Height, speed and direction are randomized each lap by turkeys.js */
 .t2 { width: 34px; animation: run-left 19s linear -6s infinite; }
 .t3 { width: 30px; animation: run-left 22s linear -12s infinite; }
